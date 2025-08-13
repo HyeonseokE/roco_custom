@@ -1,0 +1,68 @@
+
+[Action Options]
+1) PICK <obj> PATH <path>: only PICK if your gripper is empty;
+2) PLACE <obj> bin PATH <path>: only if you have already PICKed the object, you can PLACE it into an empty bin slot, do NOT PLACE if another object is already in a slot!
+
+Each <path> must contain exactly four <coord>s that smoothly interpolate between start and goal, coordinates must be evenly distanced from each other.
+The robot PATHs must efficiently reach target while avoiding collision avoid collision (e.g. move above the objects' heights).
+The PATHs must do top-down pick or place: 
+- move directly atop an object by height 0.2 before PICK: e.g. Alice's gripper is at (0, 0, 0.3), banana is at (-0.25, 0.39, 0.29): NAME Alice ACTION PICK banana PATH [(0, 0.1, 0.3),(0, 0.2, 0.49),(-0.1, 0.25, 0.49),(-0.25, 0.39, 0.49)]
+- lift an object vertically up before moving it to PLACE: e.g. Bob's gripper is at (0.9, 0, 0.2), bin_front_left is at (0.35, 0.35, 0.43): NAME Bob ACTION PLACE apple bin_front_left PATH [(0.9,0.0,0.5), (0.5, 0, 0.5), (0.2, 0.1, 0.5),(0.35, 0.35, 0.5)]
+
+[Action Output Instruction]
+First output 'EXECUTE
+', then give exactly one ACTION per robot, each on a new line.
+Example: 'EXECUTE
+NAME Alice ACTION PICK apple PATH <path>
+NAME Bob ACTION PLACE banana bin_back_middle PATH <path>
+'
+
+[Path Plan Instruction]
+Each <coord> is a tuple (x,y,z) for gripper location, follow these steps to plan:
+1) Decide target location (e.g. an object you want to pick), and your current gripper location.
+2) Plan a list of <coord> that move smoothly from current gripper to the target location.
+3) The <coord>s must be evenly spaced between start and target.
+4) Each <coord> must not collide with other robots, and must stay away from table and objects.  
+[How to Incoporate [Enviornment Feedback] to improve plan]
+    If IK fails, propose more feasible step for the gripper to reach. 
+    If detected collision, move robot so the gripper and the inhand object stay away from the collided objects. 
+    If collision is detected at a Goal Step, choose a different action.
+    To make a path more evenly spaced, make distance between pair-wise steps similar.
+        e.g. given path [(0.1, 0.2, 0.3), (0.2, 0.2. 0.3), (0.3, 0.4. 0.7)], the distance between steps (0.1, 0.2, 0.3)-(0.2, 0.2. 0.3) is too low, and between (0.2, 0.2. 0.3)-(0.3, 0.4. 0.7) is too high. You can change the path to [(0.1, 0.2, 0.3), (0.15, 0.3. 0.5), (0.3, 0.4. 0.7)] 
+    If a plan failed to execute, re-plan to choose more feasible steps in each PATH, or choose different actions.
+
+
+
+You are Bob, you and robot Alice each stands at a different side of the table, and together you must put all the grocery items into a bin.
+Locations of slots in the bin:
+bin_front_left: (0.25, 0.41, 0.36)
+bin_front_right: (0.65, 0.41, 0.36)
+bin_front_middle: (0.45, 0.41, 0.36)
+bin_back_left: (0.25, 0.58, 0.36)
+bin_back_right: (0.65, 0.58, 0.36)
+bin_back_middle: (0.45, 0.58, 0.36)
+At current round:
+You see the following objects:
+apple: (-0.27, 0.39, 0.30), on table
+banana: (-0.19, 0.60, 0.27), on table
+milk: (-0.02, 0.58, 0.47), on table
+soda_can: (-0.80, 0.38, 0.33), on table
+bread: (-0.72, 0.60, 0.31), on table
+cereal: (-0.54, 0.40, 0.44), on table
+Your gripper: (0.35, 1.05, 0.62), holding nothing
+Your gripper must move higher than these objects and higher than table height 0.25, but move lower than 0.8.
+Never forget you are Bob!
+Think step-by-step about the task and Alice's response. Carefully check and correct Alice if they made a mistake. 
+Discuss with Alice to come up with the best plan and smooth, collision-free paths. 
+Improve your paths if given [Environment Feedback], choose a different object or target slot if needed.
+
+When you respond, tell Alice about your status. Respond very concisely but informatively, and do not repeat what others have said.
+Propose exactly one action for yourself at the **current** round, select from [Action Options].
+End your response by either: 1) output PROCEED, if the plans require further discussion; 2) If everyone has made proposals and got approved, output the final plan, must strictly follow [Action Output Instruction] and [Path Plan Instruction].
+
+
+[Current Chat]
+[Alice]:
+I am currently not holding anything. I propose to pick up the apple which is closest to me. My action would be: 
+ACTION PICK apple PATH [(0.29, 0.06, 0.51), (0.0, 0.2, 0.51), (-0.1, 0.3, 0.51), (-0.27, 0.39, 0.51)]. 
+Bob, what is your plan? PROCEED.
